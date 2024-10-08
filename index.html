@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chat Interface</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: 'Helvetica Neue', Arial, sans-serif;
+            color: #333;
+            overflow-x: hidden;
+        }
+        .container {
+            display: flex;
+            min-height: 100vh;
+            width: 100vw;
+            flex-wrap: wrap;
+        }
+        .left-side {
+            flex: 1;
+            padding: 60px;
+            background-color: #f5f5f5;
+            box-sizing: border-box;
+        }
+        .left-side h1 {
+            margin-bottom: 30px;
+            font-size: 48px;
+            font-weight: 600;
+        }
+        .left-side p {
+            font-size: 20px;
+            line-height: 1.6;
+        }
+        .right-side {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            padding: 60px;
+            padding-bottom: 140px;
+            box-sizing: border-box;
+            position: relative;
+        }
+        .card {
+            position: relative;
+            background-color: #fff;
+            padding: 20px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 20px;
+            font-size: 22px;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            min-height: 180px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .card:hover {
+            transform: translateY(-5px);
+        }
+        /* Pastel colors for cards */
+        .card:nth-child(1) {
+            background-color: #ffe6e6;
+        }
+        .card:nth-child(2) {
+            background-color: #e6ffe6;
+        }
+        .card:nth-child(3) {
+            background-color: #e6f0ff;
+        }
+        .card:nth-child(4) {
+            background-color: #fffbe6;
+        }
+        .card p {
+            margin: 0;
+            flex-grow: 1;
+            text-align: left;
+        }
+        .card img {
+            position: absolute;
+            bottom: 15px;
+            left: 15px;
+            width: 35px;
+            height: 35px;
+        }
+        .chat-input {
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            background-color: #fff;
+            padding: 20px 30px;
+            box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+            border-radius: 40px;
+            width: 60%;
+            box-sizing: border-box;
+        }
+        .chat-input img {
+            width: 35px;
+            height: 35px;
+            margin-right: 20px;
+        }
+        .chat-input input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 20px;
+        }
+        .chat-output {
+            position: relative;
+            width: 100%;
+            padding: 0 60px;
+            box-sizing: border-box;
+            grid-column: 1 / -1;
+        }
+        .chat-message {
+            max-width: 60%;
+            margin: 10px 0;
+            padding: 20px;
+            background-color: #e8e8e8;
+            border-radius: 20px;
+            font-size: 20px;
+            line-height: 1.5;
+            word-wrap: break-word;
+            white-space: pre-wrap;
+        }
+        /* Styles for example questions */
+        .example-questions {
+            margin-top: 20px;
+        }
+        .example-question {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 5px 0;
+            font-size: 16px; /* Reduced font size */
+            color: #007BFF;
+            cursor: pointer;
+            border: none;
+            background: none;
+            border-bottom: 1px solid #ccc;
+            width: 100%;
+        }
+        .example-question:hover {
+            text-decoration: underline;
+        }
+        .example-question img {
+            margin-left: 10px;
+            width: 16px;
+            height: 16px;
+        }
+        /* Disable input and cards when interaction is done */
+        .disabled {
+            pointer-events: none;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="left-side">
+            <h1>Ask Chatbot...</h1>
+            <p>Lorem ipsum dolor sit amet, consectetur adipiscing elit. Praesent vitae eros eget tellus tristique bibendum. Donec rutrum sed sem quis venenatis.</p>
+        </div>
+        <div class="right-side">
+            <div class="card">
+                <p>How can I create passive income streams without relying on Wall Street investments?</p>
+                <img src="wally.png" alt="Wally Logo">
+            </div>
+            <div class="card">
+                <p>How can I better manage my monthly cash flow?</p>
+                <img src="wally.png" alt="Wally Logo">
+            </div>
+            <div class="card">
+                <p>How can I get involved?</p>
+                <img src="wally.png" alt="Wally Logo">
+            </div>
+            <div class="card">
+                <p>Tell me a story.</p>
+                <img src="wally.png" alt="Wally Logo">
+            </div>
+            <!-- Chat output will be inserted here -->
+            <div class="chat-output" id="chat-output"></div>
+        </div>
+    </div>
+    <div class="chat-input" id="chat-input">
+        <img src="wally.png" alt="Wally Icon">
+        <input type="text" id="user-input" placeholder="Ask me something..." autocomplete="off">
+    </div>
+
+    <script>
+        // Example string to be streamed word by word
+        const exampleString = `Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque vel vehicula elit, sit amet consequat sapien. Aenean vitae quam vitae urna condimentum consequat ut eget nunc.
+
+Suspendisse potenti. Curabitur auctor, sapien eget auctor fringilla, odio est porta purus, at convallis sapien leo ac sapien. Donec ac turpis vitae purus venenatis tristique.`;
+
+        const chatOutput = document.getElementById('chat-output');
+        const userInput = document.getElementById('user-input');
+        const chatInput = document.getElementById('chat-input');
+        const cards = document.querySelectorAll('.card');
+        let interactionDone = false;
+
+        // Function to simulate streaming text word by word
+        function streamText(text, callback) {
+            const words = text.split(/(\s+)/); // Split by spaces and keep them
+            let index = 0;
+            const message = document.createElement('div');
+            message.className = 'chat-message';
+            chatOutput.appendChild(message);
+
+            const interval = setInterval(() => {
+                if (index < words.length) {
+                    message.textContent += words[index];
+                    index++;
+                    // Scroll to the bottom
+                    window.scrollTo(0, document.body.scrollHeight);
+                } else {
+                    clearInterval(interval);
+                    // Callback after streaming is done
+                    if (callback) callback();
+                }
+            }, 30); // Faster streaming speed (30ms per word)
+        }
+
+        // Function to display example questions after streaming
+        function displayExampleQuestions() {
+            const exampleQuestions = [
+                'Example question 1',
+                'Example question 2',
+                'Example question 3'
+            ];
+
+            const container = document.createElement('div');
+            container.className = 'example-questions';
+
+            exampleQuestions.forEach(question => {
+                const button = document.createElement('button');
+                button.className = 'example-question';
+                button.innerHTML = `<span>${question}</span><img src="https://cdn-icons-png.flaticon.com/512/60/60995.png" alt="Down Arrow">`;
+                container.appendChild(button);
+
+                // Optional: Add click event to example questions
+                button.addEventListener('click', () => {
+                    // Handle click on example question
+                    alert(`stop clicking buttons this is not done yet`);
+                });
+            });
+
+            chatOutput.appendChild(container);
+            // Scroll to the bottom
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        // Handle input from text box
+        userInput.addEventListener('keypress', function(event) {
+            if (event.key === 'Enter' && !interactionDone) {
+                const question = userInput.value.trim();
+                if (question !== '') {
+                    // Display user's question
+                    const userMessage = document.createElement('div');
+                    userMessage.className = 'chat-message';
+                    userMessage.style.backgroundColor = '#d1e7dd'; // Light green background for user's message
+                    userMessage.textContent = question;
+                    chatOutput.appendChild(userMessage);
+                    userInput.value = '';
+                    // Simulate streaming answer
+                    streamText(exampleString, displayExampleQuestions);
+                    interactionDone = true;
+                    disableInteraction();
+                }
+            }
+        });
+
+        // Handle clicks on question cards
+        cards.forEach(card => {
+            card.addEventListener('click', function() {
+                if (!interactionDone) {
+                    const question = this.querySelector('p').textContent;
+                    // Display selected question
+                    const userMessage = document.createElement('div');
+                    userMessage.className = 'chat-message';
+                    userMessage.style.backgroundColor = '#d1e7dd';
+                    userMessage.textContent = question;
+                    chatOutput.appendChild(userMessage);
+                    // Simulate streaming answer
+                    streamText(exampleString, displayExampleQuestions);
+                    interactionDone = true;
+                    disableInteraction();
+                }
+            });
+        });
+
+        // Disable input and cards after interaction
+        function disableInteraction() {
+            userInput.disabled = true;
+            chatInput.classList.add('disabled');
+            cards.forEach(card => {
+                card.classList.add('disabled');
+            });
+        }
+    </script>
+</body>
+</html>
